@@ -34,7 +34,7 @@ _TRIKZ_RANK_IMAGE_HEIGHT = 2048
 _TRIKZ_RANK_IMAGE_PADDING = int(24 * (_TRIKZ_RANK_IMAGE_WIDTH / 2048))
 
 _RANK_TEXT_FONT_MAX_SIZE = 512
-_RANK_TEXT_STROKE_WIDTH = int(12 * (_TRIKZ_RANK_IMAGE_WIDTH / 2048))
+_RANK_TEXT_STROKE_WIDTH = int(8 * (_TRIKZ_RANK_IMAGE_WIDTH / 2048))
 _RANK_TEXT_OUTLINE_WIDTH = 1
 _RANK_TEXT_OUTLINE_FACTOR = 0.52
 
@@ -104,8 +104,8 @@ def _main():
 
         x, y, _, _, _, font = _find_font(_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT, _TRIKZ_RANK_IMAGE_PADDING, rank, _RES_RANK_FONT_PATH, m_font_sz)
 
-        outline_draw.text((x, y), rank, font=font, fill=(255, 255, 255, 255), stroke_width=_RANK_TEXT_OUTLINE_WIDTH, stroke_fill=(0, 0, 0, 255))
-        text_draw.text((x, y), rank, font=font, fill=(255, 255, 255, 255))
+        text_draw.text((x, y), rank, font=font, fill=(255, 255, 255, 255), stroke_width=_RANK_TEXT_STROKE_WIDTH, stroke_fill=(255, 255, 255, 255))
+        outline_draw.text((x, y), rank, font=font, fill=(255, 255, 255, 255), stroke_width=_RANK_TEXT_OUTLINE_WIDTH + _RANK_TEXT_STROKE_WIDTH, stroke_fill=(0, 0, 0, 255))
 
         text_gradient = Image.new('RGBA', (_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT), (0, 0, 0, 0))
         outline_gradient = Image.new('RGBA', (_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT), (0, 0, 0, 0))
