@@ -96,7 +96,6 @@ def _main():
         color0 = _hex2rgb(hexs[0])
         color1 = _hex2rgb(hexs[-1])
 
-
         x, y, w, h, _, font = _find_font(_RANK_IMAGE_WIDTH, _RANK_IMAGE_HEIGHT, _RANK_IMAGE_PADDING, rank, _RES_RANK_FONT_PATH, m_font_sz)
 
         image_width = w + (_RANK_IMAGE_PADDING * 2)
