@@ -29,12 +29,12 @@ _TRIKZ_RANKS = {
     'Eternal': ('#be185d', '#f472b6')
 }
 
-_TRIKZ_RANK_IMAGE_WIDTH = 2048
-_TRIKZ_RANK_IMAGE_HEIGHT = 2048
-_TRIKZ_RANK_IMAGE_PADDING = int(24 * (_TRIKZ_RANK_IMAGE_WIDTH / 2048))
+_RANK_IMAGE_WIDTH = 2048
+_RANK_IMAGE_HEIGHT = 2048
+_RANK_IMAGE_PADDING = int(24 * (_RANK_IMAGE_WIDTH / 2048))
 
 _RANK_TEXT_FONT_MAX_SIZE = 512
-_RANK_TEXT_STROKE_WIDTH = int(8 * (_TRIKZ_RANK_IMAGE_WIDTH / 2048))
+_RANK_TEXT_STROKE_WIDTH = int(8 * (_RANK_IMAGE_WIDTH / 2048))
 _RANK_TEXT_OUTLINE_WIDTH = 1
 _RANK_TEXT_OUTLINE_FACTOR = 0.52
 
@@ -90,28 +90,32 @@ def _find_font(width, height, padding, text, path, size):
 
 def _main():
     longest_rank = max(_TRIKZ_RANKS.keys(), key=len)
-    _, _, _, _, m_font_sz, _ = _find_font(_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT, _TRIKZ_RANK_IMAGE_PADDING, longest_rank, _RES_RANK_FONT_PATH, _RANK_TEXT_FONT_MAX_SIZE)
+    _, _, _, _, m_font_sz, _ = _find_font(_RANK_IMAGE_WIDTH, _RANK_IMAGE_HEIGHT, _RANK_IMAGE_PADDING, longest_rank, _RES_RANK_FONT_PATH, _RANK_TEXT_FONT_MAX_SIZE)
 
     for rank, hexs in _TRIKZ_RANKS.items():
         color0 = _hex2rgb(hexs[0])
         color1 = _hex2rgb(hexs[-1])
 
-        text_image = Image.new('RGBA', (_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT), (0, 0, 0, 0))
+
+        x, y, w, h, _, font = _find_font(_RANK_IMAGE_WIDTH, _RANK_IMAGE_HEIGHT, _RANK_IMAGE_PADDING, rank, _RES_RANK_FONT_PATH, m_font_sz)
+
+        image_width = w + (_RANK_IMAGE_PADDING * 2)
+        image_height = h + (_RANK_IMAGE_PADDING * 2)
+        x, y = _RANK_IMAGE_PADDING, _RANK_IMAGE_PADDING
+
+        text_image = Image.new('RGBA', (image_width, image_height), (0, 0, 0, 0))
         text_draw = ImageDraw.Draw(text_image)
-
-        outline_image = Image.new('RGBA', (_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT), (0, 0, 0, 0))
-        outline_draw = ImageDraw.Draw(outline_image)
-
-        x, y, _, _, _, font = _find_font(_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT, _TRIKZ_RANK_IMAGE_PADDING, rank, _RES_RANK_FONT_PATH, m_font_sz)
-
         text_draw.text((x, y), rank, font=font, fill=(255, 255, 255, 255), stroke_width=_RANK_TEXT_STROKE_WIDTH, stroke_fill=(255, 255, 255, 255))
+
+        outline_image = Image.new('RGBA', (image_width, image_height), (0, 0, 0, 0))
+        outline_draw = ImageDraw.Draw(outline_image)
         outline_draw.text((x, y), rank, font=font, fill=(255, 255, 255, 255), stroke_width=_RANK_TEXT_OUTLINE_WIDTH + _RANK_TEXT_STROKE_WIDTH, stroke_fill=(0, 0, 0, 255))
 
-        text_gradient = Image.new('RGBA', (_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT), (0, 0, 0, 0))
-        outline_gradient = Image.new('RGBA', (_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT), (0, 0, 0, 0))
-        for i in range(_TRIKZ_RANK_IMAGE_WIDTH):
-            for j in range(_TRIKZ_RANK_IMAGE_HEIGHT):
-                ratio = i / _TRIKZ_RANK_IMAGE_WIDTH
+        text_gradient = Image.new('RGBA', (image_width, image_height), (0, 0, 0, 0))
+        outline_gradient = Image.new('RGBA', (image_width, image_height), (0, 0, 0, 0))
+        for i in range(image_width):
+            for j in range(image_height):
+                ratio = i / image_width
                 ratio = max(0, min(1, ratio))
 
                 r = int(color0[0] * (1 - ratio) + color1[0] * ratio)
@@ -128,14 +132,14 @@ def _main():
         text_mask = text_image.split()[3]
         outline_mask = outline_image.split()[3]
 
-        result_text_image = Image.new('RGBA', (_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT), (0, 0, 0, 0))
+        result_text_image = Image.new('RGBA', (image_width, image_height), (0, 0, 0, 0))
         result_text_image.paste(text_gradient, (0, 0), mask=text_mask)
 
-        result_outline_image = Image.new('RGBA', (_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT), (0, 0, 0, 0))
+        result_outline_image = Image.new('RGBA', (image_width, image_height), (0, 0, 0, 0))
         result_outline_image.paste(outline_gradient, (0, 0), mask=outline_mask)
 
         result_image = Image.alpha_composite(result_outline_image, result_text_image)
-        result_image.save(_RES_RANKS_TRIKZ_PATH / f'{rank}~{_TRIKZ_RANK_IMAGE_WIDTH}x{_TRIKZ_RANK_IMAGE_HEIGHT}.png')
+        result_image.save(_RES_RANKS_TRIKZ_PATH / f'{rank}.png')
 
 
 if __name__ == '__main__':
