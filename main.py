@@ -4,8 +4,6 @@ from PIL import ImageFont
 
 from pathlib import Path
 
-import math
-
 
 _RES_PATH = Path(__file__).parent / 'res'
 _RES_RANKS_PATH = _RES_PATH / 'ranks'
@@ -31,11 +29,14 @@ _TRIKZ_RANKS = {
     'Eternal': ('#be185d', '#f472b6')
 }
 
-_RANK_TEXT_FONT_MAX_SIZE = 512
-_RANK_TEXT_STROKE_WIDTH = 12
 _TRIKZ_RANK_IMAGE_WIDTH = 2048
 _TRIKZ_RANK_IMAGE_HEIGHT = 2048
-_TRIKZ_RANK_IMAGE_PADDING = 24
+_TRIKZ_RANK_IMAGE_PADDING = int(24 * (_TRIKZ_RANK_IMAGE_WIDTH / 2048))
+
+_RANK_TEXT_FONT_MAX_SIZE = 512
+_RANK_TEXT_STROKE_WIDTH = int(12 * (_TRIKZ_RANK_IMAGE_WIDTH / 2048))
+_RANK_TEXT_OUTLINE_WIDTH = 1
+_RANK_TEXT_OUTLINE_FACTOR = 0.52
 
 
 def _hex2rgb(hex_):
@@ -88,17 +89,26 @@ def _find_font(width, height, padding, text, path, size):
 
 
 def _main():
+    longest_rank = max(_TRIKZ_RANKS.keys(), key=len)
+    _, _, _, _, m_font_sz, _ = _find_font(_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT, _TRIKZ_RANK_IMAGE_PADDING, longest_rank, _RES_RANK_FONT_PATH, _RANK_TEXT_FONT_MAX_SIZE)
+
     for rank, hexs in _TRIKZ_RANKS.items():
         color0 = _hex2rgb(hexs[0])
         color1 = _hex2rgb(hexs[-1])
 
-        image = Image.new('RGBA', (_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(image)
+        text_image = Image.new('RGBA', (_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT), (0, 0, 0, 0))
+        text_draw = ImageDraw.Draw(text_image)
 
-        x, y, _, _, _, font = _find_font(_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT, _TRIKZ_RANK_IMAGE_PADDING, rank, _RES_RANK_FONT_PATH, _RANK_TEXT_FONT_MAX_SIZE)
-        draw.text((x, y), rank, font=font, fill=(255, 255, 255, 255), stroke_width=_RANK_TEXT_STROKE_WIDTH, stroke_fill=(255, 255, 255, 255))
+        outline_image = Image.new('RGBA', (_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT), (0, 0, 0, 0))
+        outline_draw = ImageDraw.Draw(outline_image)
 
-        gradient = Image.new('RGBA', (_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT), (0, 0, 0, 0))
+        x, y, _, _, _, font = _find_font(_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT, _TRIKZ_RANK_IMAGE_PADDING, rank, _RES_RANK_FONT_PATH, m_font_sz)
+
+        outline_draw.text((x, y), rank, font=font, fill=(255, 255, 255, 255), stroke_width=_RANK_TEXT_OUTLINE_WIDTH, stroke_fill=(0, 0, 0, 255))
+        text_draw.text((x, y), rank, font=font, fill=(255, 255, 255, 255))
+
+        text_gradient = Image.new('RGBA', (_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT), (0, 0, 0, 0))
+        outline_gradient = Image.new('RGBA', (_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT), (0, 0, 0, 0))
         for i in range(_TRIKZ_RANK_IMAGE_WIDTH):
             for j in range(_TRIKZ_RANK_IMAGE_HEIGHT):
                 ratio = i / _TRIKZ_RANK_IMAGE_WIDTH
@@ -108,13 +118,24 @@ def _main():
                 g = int(color0[1] * (1 - ratio) + color1[1] * ratio)
                 b = int(color0[2] * (1 - ratio) + color1[2] * ratio)
 
-                gradient.putpixel((i, j), (r, g, b, 255))
+                dr = int(r * _RANK_TEXT_OUTLINE_FACTOR)
+                dg = int(g * _RANK_TEXT_OUTLINE_FACTOR)
+                db = int(b * _RANK_TEXT_OUTLINE_FACTOR)
 
-        mask = image.split()[3]
-        result = Image.new('RGBA', (_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT), (0, 0, 0, 0))
-        result.paste(gradient, (0, 0), mask=mask)
+                text_gradient.putpixel((i, j), (r, g, b, 255))
+                outline_gradient.putpixel((i, j), (dr, dg, db, 255))
 
-        result.save(_RES_RANKS_TRIKZ_PATH / f'{rank}~{_TRIKZ_RANK_IMAGE_WIDTH}x{_TRIKZ_RANK_IMAGE_HEIGHT}.png')
+        text_mask = text_image.split()[3]
+        outline_mask = outline_image.split()[3]
+
+        result_text_image = Image.new('RGBA', (_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT), (0, 0, 0, 0))
+        result_text_image.paste(text_gradient, (0, 0), mask=text_mask)
+
+        result_outline_image = Image.new('RGBA', (_TRIKZ_RANK_IMAGE_WIDTH, _TRIKZ_RANK_IMAGE_HEIGHT), (0, 0, 0, 0))
+        result_outline_image.paste(outline_gradient, (0, 0), mask=outline_mask)
+
+        result_image = Image.alpha_composite(result_outline_image, result_text_image)
+        result_image.save(_RES_RANKS_TRIKZ_PATH / f'{rank}~{_TRIKZ_RANK_IMAGE_WIDTH}x{_TRIKZ_RANK_IMAGE_HEIGHT}.png')
 
 
 if __name__ == '__main__':
